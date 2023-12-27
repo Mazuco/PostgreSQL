@@ -1,0 +1,96 @@
+# Scope of PostgreSQL
+scope: postgres
+
+# Namespace for the PostgreSQL database
+namespace: /db/
+
+# Name of the PostgreSQL instance
+name: pgha1
+
+# Patroni REST API Configuration
+restapi:
+    # The IP address and port on which the REST API should listen
+    listen: pgha1:8008
+
+    # The IP address and port to which clients should connect
+    connect_address: pgha1:8008
+
+# Patroni Etcd Configuration
+etcd3:
+    # The host address and port of the Etcd server
+    host: etcd:2379
+
+# Patroni Bootstrap Configuration
+bootstrap:
+    # Configuration parameters for distributed configuration store (DCS)
+    dcs:
+        ttl: 30
+        loop_wait: 10
+        retry_timeout: 10
+        maximum_lag_on_failover: 1048576
+        postgresql:
+            # Use pg_rewind during bootstrap
+            use_pg_rewind: true
+            
+    # Initdb configuration
+    initdb:
+        - auth: scram-sha-256
+        - encoding: UTF8
+        - data-checksums
+
+    # pg_hba.conf entries for replication and general access
+    pg_hba:
+        - host replication replicator 127.0.0.1/32 scram-sha-256
+        - host replication replicator pgha1 scram-sha-256
+        - host replication replicator pgha2 scram-sha-256
+        - host replication replicator pgha3 scram-sha-256
+        - host all all 0.0.0.0/0 scram-sha-256
+
+    users:
+    admin:
+        password: admin
+        options:
+            - createrole
+            - createdb
+
+# Patroni PostgreSQL Configuration
+postgresql:
+    # PostgreSQL server listening address and port
+    listen: pgha1:5432
+    # Connect address for PostgreSQL clients
+    connect_address: pgha1:5432
+    # Data directory for PostgreSQL
+    data_dir: /var/lib/patroni
+    # Path to the pgpass file
+    pgpass: /tmp/pgpass
+
+    # Authentication configuration
+    authentication:
+        # Replication of user credentials
+        replication:
+            username: replicator
+            password: rep-pass
+        # Superuser credentials
+        superuser:
+            username: postgres
+            password: postgres
+
+    # Additional PostgreSQL parameters
+    parameters:
+        # Directory for Unix socket
+        unix_socket_directories: '.'
+        # Password encryption method
+        password_encryption: 'scram-sha-256'
+  
+
+# Patroni Tags Configuration
+tags:
+    # Prevents a node from being promoted in case of failure
+    nofailover: false
+    # Prevents the load balancer from considering this node
+    noloadbalance: false
+    # Prevents a replica from being created by cloning
+    clonefrom: false
+    # Prevents synchronous replication from being enforced
+    nosync: false
+
