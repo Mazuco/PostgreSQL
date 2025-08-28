@@ -13,7 +13,7 @@ unzip -j "$ZIPFILE" "*.gpx" -d "$WORKDIR"
 
 # Loop through the extracted GPX files
 for f in "$WORKDIR"/*.gpx; do
-    echo "Importando $f para gpsrun.rk_track_points..."
+    echo "Importing $f into gpsrun.rk_track_points..."
 
     ogr2ogr -append -update \
         -f PostgreSQL PG:"dbname='geodb' user='postgres' password='123456'" \
